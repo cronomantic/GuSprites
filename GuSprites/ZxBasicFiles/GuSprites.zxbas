@@ -16,9 +16,11 @@
 'much less memory, but will be slower.
 'If not enabled, the library will store shifted sprites in SPRITE_BUFFER, which is
 'the default behavior: each 1x1,1x2,2x2 sprite in 48,72,120 bytes
-'#define STORE_UNSHIFTED_SPRITES
-'When this and previous defines are enabled, sprites are included from unshifted-sprites 
-'file "sprites.bas". This file is shorter than shifted-sprites file "Sprites.zxbas".
+'
+'When this define is enabled, PRECOMPUTED_SPRITES will be automatically enabled, and sprites
+'will be included from "Sprites.zxbas", which MUST be an unshifted-sprites file in this case.
+
+'#define UNSHIFTED_SPRITES
 
 'Enabling this define changes the merge of the sprites and tiles to be a XOR instead of an OR
 '#define MERGE_WITH_XOR
@@ -225,7 +227,7 @@ ldi \
 
 #define ROM_CHARSET 3C00h
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 
 SPRITE_1x1_BUFFER_SIZE equ (1 * 8)
 SPRITE_1x2_BUFFER_SIZE equ (2 * 8)
@@ -312,7 +314,7 @@ defw 0
 CURRENT_CLEAR_MAP:          ;puntero a uno de los mapas de celdas que se usa para almacenar las id's de operaciones de limpieza por su posición
 defw 0
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
                             ;Cantidad de bytes de cada tipo (v=vacío, g=gráfico)
 #ifdef ENABLE_1x1_SPRITES
 TEMP_1x1_SPRITE:            ;Tenemos sprites 1x1:
@@ -341,6 +343,12 @@ defs 72                     ;4v + 16g + 8v + 16g + 8v + 16g + 4v = 72
 
 #endif
 
+#ifdef UNSHIFTED_SPRITES
+#ifndef PRECOMPUTED_SPRITES
+#define PRECOMPUTED_SPRITES
+#endif
+#endif
+
 #ifndef PRECOMPUTED_SPRITES
 
 SPRITE_BUFFER:              ;shifted sprite buffer
@@ -354,11 +362,7 @@ defb 0
 
 end asm
 
-#ifdef STORE_UNSHIFTED_SPRITES
-    #include "sprites.bas"
-#else
     #include "Sprites.zxbas"
-#endif
 
 asm
 
@@ -591,7 +595,7 @@ ENDP
 #ifdef ENABLE_1x1_SPRITES
 
 PROC
-#ifndef STORE_UNSHIFTED_SPRITES
+#ifndef UNSHIFTED_SPRITES
 LOCAL LOOP
 #endif
 CREATE_1x1_SPRITE:          ;input: hl = sprite address, output: a = sprite number (base 1); trash= bc, de, hl, a
@@ -600,7 +604,7 @@ push hl
 ld bc, SPRITE_1x1_BUFFER_SIZE
 call CREATE_SPRITE_BUFFER   ;create buffer
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 pop hl
 LDI_8()
@@ -656,7 +660,7 @@ ENDP
 #ifdef ENABLE_1x2_SPRITES
 
 PROC
-#ifndef STORE_UNSHIFTED_SPRITES
+#ifndef UNSHIFTED_SPRITES
 LOCAL LOOP
 #endif
 CREATE_1x2_SPRITE:
@@ -665,7 +669,7 @@ push hl
 ld bc, SPRITE_1x2_BUFFER_SIZE
 call CREATE_SPRITE_BUFFER   ;create buffer
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 pop hl
 LDI_8()
@@ -725,7 +729,7 @@ ENDP
 #ifdef ENABLE_2x2_SPRITES
 
 PROC
-#ifndef STORE_UNSHIFTED_SPRITES
+#ifndef UNSHIFTED_SPRITES
 LOCAL LOOP
 #endif
 CREATE_2x2_SPRITE:
@@ -734,7 +738,7 @@ push hl
 ld bc, SPRITE_2x2_BUFFER_SIZE
 call CREATE_SPRITE_BUFFER   ;create buffer
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 pop hl
 LDI_8()
@@ -1309,7 +1313,7 @@ jp nz, TEST_SHIFTS
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 #else
 ld hl, 4
@@ -1333,7 +1337,7 @@ jp z, VERTICAL_SHIFT
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld ix, TEMP_1x1_SPRITE + 4
 ld h, b
 ld b, 8
@@ -1379,7 +1383,7 @@ HORIZONTAL_SHIFT:
 srl b                       ;calculate col/row
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld ix, TEMP_1x1_SPRITE + 4
 ld h, b
 ld b, 8
@@ -1430,7 +1434,7 @@ srl b                       ;calculate row/col
 srl c
 
 ex de, hl
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld de, TEMP_1x1_SPRITE + 4
 push bc
 LDI_8()
@@ -1470,7 +1474,7 @@ jp nz, TEST_SHIFTS
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 #else
 ld hl, 4
@@ -1495,7 +1499,7 @@ jp z, VERTICAL_SHIFT
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld ix, TEMP_1x2_SPRITE + 4
 ld h, b
 ld b, 16
@@ -1539,7 +1543,7 @@ HORIZONTAL_SHIFT:
 srl b                       ;calculate col/row
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld ix, TEMP_1x2_SPRITE + 4
 ld h, b
 ld b, 16
@@ -1586,7 +1590,7 @@ srl b                       ;calculate row/col
 srl c
 
 ex de, hl
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld de, TEMP_1x2_SPRITE + 4
 push bc
 LDI_8()
@@ -1626,7 +1630,7 @@ jp nz, TEST_SHIFTS
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ex de, hl
 #else
 ld hl, 4
@@ -1640,7 +1644,7 @@ call DRAW_SPRITE_COLUMN
 
 pop bc
 inc b
-#ifndef STORE_UNSHIFTED_SPRITES
+#ifndef UNSHIFTED_SPRITES
 ld de, 8
 add hl, de
 #endif
@@ -1662,7 +1666,7 @@ jp z, VERTICAL_SHIFT
 srl b                       ;calculate row/col
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld iyh, d
 ld iyl, e
 ld ix, TEMP_2x2_SPRITE + 4
@@ -1715,7 +1719,7 @@ HORIZONTAL_SHIFT:
 srl b                       ;calculate col/row
 srl c
 
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld iyh, d
 ld iyl, e
 ld ix, TEMP_2x2_SPRITE + 4
@@ -1773,7 +1777,7 @@ srl b                       ;calculate row/col
 srl c
 
 ex de, hl
-#ifdef STORE_UNSHIFTED_SPRITES
+#ifdef UNSHIFTED_SPRITES
 ld de, TEMP_2x2_SPRITE + 4
 push bc
 LDI_8()
